@@ -4,7 +4,6 @@ config-version: 2
 profile: usvi_spending
 
 model-paths: ["models"]
-seed-paths: ["seeds"]
 test-paths: ["tests"]
 macro-paths: ["macros"]
 
@@ -19,10 +18,6 @@ models:
     marts:
       +materialized: table
       +schema: marts
-
-seeds:
-  usvi_spending:
-    +schema: reference
 
 vars:
   # the first fiscal year in the data (the search API and bulk downloads start on 1 Oct 2007)

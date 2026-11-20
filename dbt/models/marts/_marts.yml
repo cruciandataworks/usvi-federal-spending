@@ -39,9 +39,11 @@ models:
         data_tests: [unique]
   - name: mart_recipient_kinds
   - name: mart_subcontracting
-    columns:
-      - name: prime
-        data_tests: [unique]
+    description: One row per prime recipient and subaward kind.
+    data_tests:
+      - unique_combination:
+          arguments:
+            columns: [prime, kind]
   - name: mart_new_contracts
   - name: mart_alerts
     columns:

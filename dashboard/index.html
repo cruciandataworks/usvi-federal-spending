@@ -1,0 +1,193 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>USVI Federal Spending · Crucian Data Works</title>
+<meta name="description" content="Every federal contract, grant, loan and payment performed in the U.S. Virgin Islands since fiscal year 2008, from USAspending.gov: which agencies spend, who receives it, how much stays with local firms, and which contracts end soon. A Crucian Data Works portfolio project.">
+<link rel="icon" href="cdw-icon-app-tile.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://api.fontshare.com">
+<link href="https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@700,800&f[]=satoshi@400,500,700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+<link rel="stylesheet" href="spending.css">
+</head>
+<body>
+<div class="demo-bar" role="note">
+  <span class="pill">Portfolio project 06</span>
+  <span>Built from public <a href="https://www.usaspending.gov/state/78/latest" target="_blank" rel="noopener">USAspending.gov</a> data. Not procurement advice. Opportunities are posted on <a href="https://sam.gov/" target="_blank" rel="noopener">SAM.gov</a>.</span>
+</div>
+
+<header class="top">
+  <div class="wrap top-inner">
+    <div class="title">
+      <p class="eyebrow">U.S. Virgin Islands · Federal spending</p>
+      <h1>Where does federal money go in the Virgin Islands?</h1>
+      <p class="sub" id="updated">Loading…</p>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+  <section class="alerts" aria-label="Alerts" id="alerts"></section>
+
+  <section class="kpis" aria-label="Key figures" id="kpis"></section>
+
+  <section class="card finding-card">
+    <p class="eyebrow">What the record shows</p>
+    <p class="big" id="finding"></p>
+    <div class="facts" id="facts"></div>
+  </section>
+
+  <section class="card">
+    <header class="card-h row">
+      <div><h2>Obligations by fiscal year</h2><p id="yearsSub">Money committed to work performed in the USVI, by award type · fiscal years run October to September</p></div>
+      <div class="toggle" role="group" aria-label="Award types" id="yearToggle">
+        <button data-k="all" aria-pressed="true">All types</button>
+        <button data-k="contracts" aria-pressed="false">Contracts only</button>
+      </div>
+    </header>
+    <div class="chart tall"><canvas id="cYears" aria-label="Federal obligations in the USVI by fiscal year"></canvas></div>
+    <p class="fine-inline" id="yearsNote"></p>
+  </section>
+
+  <section class="grid two">
+    <article class="card">
+      <header class="card-h"><h2>Which agencies spend</h2><p id="agSub"></p></header>
+      <ul class="meters" id="agencies"></ul>
+    </article>
+    <article class="card">
+      <header class="card-h"><h2>Who receives it</h2><p id="rkSub"></p></header>
+      <ul class="meters" id="kinds"></ul>
+      <p class="fine-inline">The territorial government includes its departments and authorities (WAPA, Port Authority, Housing Authority and others). Payments to individuals are mostly disaster and income support.</p>
+    </article>
+  </section>
+
+  <section class="grid two-uneven">
+    <article class="card">
+      <header class="card-h"><h2>How much contract money stays local</h2><p>Share of contract obligations going to contractors with a USVI address, by fiscal year</p></header>
+      <div class="chart local"><canvas id="cLocal" aria-label="Local share of contract dollars by fiscal year"></canvas></div>
+      <p class="fine-inline">"Local" means the contractor's registered address is in the USVI. Off-island primes often hire local subcontractors, which this measure cannot see; see subcontracting below.</p>
+    </article>
+    <article class="card">
+      <header class="card-h"><h2>What the government buys here</h2><p id="naicsSub"></p></header>
+      <ul class="meters" id="naics"></ul>
+    </article>
+  </section>
+
+  <section class="card" id="leadsCard">
+    <header class="card-h row">
+      <div><h2>Contracts ending soon</h2><p id="leadsSub"></p></div>
+    </header>
+    <div class="filters">
+      <div class="toggle" role="group" aria-label="Ends within" id="leadToggle">
+        <button data-k="all" aria-pressed="true">All</button>
+        <button data-k="Within 6 months" aria-pressed="false">6 months</button>
+        <button data-k="6 to 12 months" aria-pressed="false">6–12 months</button>
+        <button data-k="12 to 24 months" aria-pressed="false">12–24 months</button>
+      </div>
+      <label class="check"><input type="checkbox" id="leadOff"> Off-island prime only</label>
+      <div class="hd-tools push">
+        <label class="pick"><span class="sr">Search contracts</span><input id="leadSearch" type="search" placeholder="Search agency, contractor or work" aria-label="Search contracts"></label>
+        <a class="dl" href="data/leads.csv" download>Download CSV</a>
+      </div>
+    </div>
+    <div class="table-wrap">
+      <table class="tbl" id="tLeads">
+        <thead><tr><th>Work</th><th>Agency</th><th>Prime contractor</th><th>Ends</th><th class="n">Value</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="more-row"><button class="more" id="leadMore" type="button"></button></div>
+  </section>
+
+  <section class="card">
+    <header class="card-h row">
+      <div><h2>Contractors</h2><p id="ctSub"></p></div>
+      <div class="hd-tools">
+        <label class="pick"><span class="sr">Find a contractor</span><input id="ctSearch" type="search" placeholder="Find a contractor" aria-label="Find a contractor"></label>
+        <a class="dl" href="data/contractors.csv" download>Download CSV</a>
+      </div>
+    </header>
+    <div class="table-wrap">
+      <table class="tbl" id="tCt">
+        <thead><tr><th>Contractor</th><th>Based</th><th class="n" id="ctRecentH">Last 5 years</th><th class="n">Since FY2008</th><th>Main work</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <div class="more-row"><button class="more" id="ctMore" type="button"></button></div>
+  </section>
+
+  <section class="card">
+    <header class="card-h row">
+      <div><h2>Subawards: who the primes pass work to</h2><p>Prime recipients reporting subcontracts and subgrants performed in the USVI, all years</p></div>
+      <div class="toggle" role="group" aria-label="Subaward kind" id="subToggle">
+        <button data-k="subcontract" aria-pressed="true">Subcontracts</button>
+        <button data-k="subgrant" aria-pressed="false">Subgrants</button>
+      </div>
+    </header>
+    <div class="table-wrap">
+      <table class="tbl" id="tSub">
+        <thead><tr><th>Prime</th><th class="n">Subawards</th><th class="n">Amount</th><th class="n">To local firms</th><th>Largest subawardees</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+    <p class="fine-inline">Primes must report subawards of $30,000 or more ($25,000 before late 2020) to SAM.gov. Reporting is incomplete, so these are a floor. A prime can appear under both kinds.</p>
+  </section>
+
+  <section class="card">
+    <header class="card-h"><h2>Checked against USAspending</h2><p>Our totals, added up from each transaction, beside USAspending's own figure for every fiscal year and award type</p></header>
+    <div class="checks" id="checks"></div>
+    <div class="table-wrap">
+      <table class="tbl" id="tRecon">
+        <thead><tr><th>Fiscal year</th><th class="n">Our total</th><th class="n">USAspending</th><th class="n">Difference</th><th>Status</th></tr></thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </section>
+
+  <section class="card">
+    <header class="card-h"><h2>Read with care</h2><p>What these numbers can and cannot say</p></header>
+    <ul class="caveats">
+      <li><b>Obligations, not cash.</b> An obligation is the government's commitment to pay. Money is spent (outlayed) later, sometimes over many years, and a negative figure means an earlier commitment was reduced.</li>
+      <li><b>Place of performance.</b> Every row is work performed in the USVI, whoever the recipient is and wherever they are based. A Florida firm repairing a St. Thomas pier counts; a USVI firm working in Puerto Rico does not.</li>
+      <li><b>Recent months fill in late.</b> Agencies report contracts within days but assistance monthly or later, so the current and previous fiscal year keep changing. Older years are fixed and are tested to match USAspending to the dollar.</li>
+      <li><b>Ending is not re-bidding.</b> A contract ending soon may be extended, replaced by an order under a larger vehicle, or not needed again. Check SAM.gov for an actual solicitation.</li>
+      <li><b>Individuals are grouped.</b> Payments to individuals are reported in aggregate by USAspending to protect privacy, and no person is named on this page.</li>
+      <li><b>Disaster money dominates.</b> FEMA Public Assistance for Hurricane Maria (2017) makes FY2024 and FY2025 roughly ten times larger than a typical year before the storms, so compare years with that in mind.</li>
+    </ul>
+  </section>
+
+  <section class="card how" id="how">
+    <div>
+      <p class="eyebrow">How this was built</p>
+      <h2>One public source, one tested model, refreshed every day</h2>
+      <p>USAspending.gov publishes every federal contract, grant, loan and payment. Each morning the pipeline asks USAspending's bulk download service for every prime transaction and subaward performed in the Virgin Islands that changed recently, and once a week it reloads the two most recent fiscal years in full. Python lands the files into a Parquet lake, and DuckDB and dbt build every number on this page with tested SQL. One test adds up every transaction and fails the build if any completed year differs from USAspending's own total by more than a dollar. When a new contract of $100,000 or more appears, the pipeline opens a GitHub alert.</p>
+      <p class="finding" id="howFinding"></p>
+    </div>
+    <ol>
+      <li><b>1</b>Download prime transactions from USAspending</li>
+      <li><b>2</b>Download subcontracts and subgrants</li>
+      <li><b>3</b>Fetch USAspending's official yearly totals</li>
+      <li><b>4</b>Load the lake into DuckDB</li>
+      <li><b>5</b>Model and test with dbt, including the reconciliation</li>
+      <li><b>6</b>Export JSON and CSV for this page</li>
+      <li><b>7</b>Open, update or close alert issues on GitHub</li>
+    </ol>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="wrap foot-inner">
+    <div class="brand">
+      <img src="cdw-icon-reverse.svg" alt="" width="36" height="36">
+      <div><b>Crucian Data Works</b><span>Data engineering from St. Croix</span></div>
+    </div>
+    <div class="contact">Roger Simon · <a href="mailto:hello@cruciandataworks.com">hello@cruciandataworks.com</a></div>
+  </div>
+  <p class="wrap fine">Data: U.S. Department of the Treasury, <a href="https://www.usaspending.gov/state/78/latest" target="_blank" rel="noopener">USAspending.gov</a>, through its <a href="https://api.usaspending.gov/docs/endpoints" target="_blank" rel="noopener">public API</a> and <a href="https://files.usaspending.gov/" target="_blank" rel="noopener">bulk download service</a>. Contractor size and ownership flags are as reported by the contracting agency from SAM.gov. This page is an independent analysis. <span id="built"></span></p>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

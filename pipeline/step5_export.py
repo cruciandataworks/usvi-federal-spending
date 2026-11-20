@@ -101,14 +101,15 @@ def main():
                                      contract_value, obligated_in_usvi, permalink
                               from marts.mart_contract_leads order by current_end_date, contract_value desc"""),
         "subcontracting": rows(con, """select * from marts.mart_subcontracting
-                                       order by subaward_amount desc limit 40"""),
+                                       qualify row_number() over (partition by kind order by subaward_amount desc) <= 25
+                                       order by kind, subaward_amount desc"""),
         "recent_subawards": rows(con, """select kind, subawardee_name, subawardee_city, subawardee_state,
                                                 is_local_subawardee, subaward_amount, subaward_action_date,
                                                 prime_awardee_name, prime_awarding_sub_agency, subaward_description
                                          from staging.stg_subawards
                                          order by subaward_action_date desc nulls last, subaward_amount desc limit 60"""),
         "new_contracts": rows(con, "select * from marts.mart_new_contracts order by first_action_date desc"),
-        "alerts": rows(con, "select alert_key, category, severity, title, observed_at from marts.mart_alerts"),
+        "alerts": rows(con, "select alert_key, category, severity, title, message, observed_at from marts.mart_alerts"),
         "health": rows(con, "select * from staging.stg_source_health order by source"),
     }
     OUT.mkdir(parents=True, exist_ok=True)
