@@ -158,6 +158,11 @@ def main():
         # 1. Backfill any fiscal year not yet downloaded. The start date of the backfill is
         #    remembered so step 2 later asks for everything modified since then.
         done = set(state.get("years_done", []))
+        if state.get("type_codes") != ALL_PRIME_TYPES:
+            # The list of award type codes changed (USAspending added F001-F010 in 2026),
+            # so every year is downloaded again with the full list.
+            done = set()
+            state["type_codes"] = ALL_PRIME_TYPES
         state.setdefault("modified_since", today.isoformat())
         todo = [fy for fy in range(FIRST_FY, this_fy + 1) if fy not in done]
         # USAspending builds downloads in parallel, so ask for two years at a time

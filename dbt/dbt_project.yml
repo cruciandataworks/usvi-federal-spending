@@ -1,0 +1,43 @@
+name: usvi_spending
+version: "1.0.0"
+config-version: 2
+profile: usvi_spending
+
+model-paths: ["models"]
+seed-paths: ["seeds"]
+test-paths: ["tests"]
+macro-paths: ["macros"]
+
+models:
+  usvi_spending:
+    staging:
+      +materialized: view
+      +schema: staging
+    intermediate:
+      +materialized: table
+      +schema: intermediate
+    marts:
+      +materialized: table
+      +schema: marts
+
+seeds:
+  usvi_spending:
+    +schema: reference
+
+vars:
+  # the first fiscal year in the data (the search API and bulk downloads start on 1 Oct 2007)
+  first_fy: 2008
+  # "recent" totals, rankings and leads use the last this-many complete fiscal years
+  recent_fys: 5
+  # contracts smaller than this are left out of the lead list
+  lead_min_value: 25000
+  # a contract is a lead when its current end date is within this many months
+  lead_horizon_months: 24
+  # alert when a new contract of at least this value appears ...
+  new_award_alert_min: 100000
+  # ... with its first action in the last this-many days
+  new_award_days: 7
+  # our yearly totals must match USAspending's within this many dollars
+  reconcile_tolerance_usd: 1.0
+  # the collectors run once a day; alert after this many failures in a row
+  max_consecutive_failures: 2

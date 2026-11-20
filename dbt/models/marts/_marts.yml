@@ -1,0 +1,49 @@
+version: 2
+
+models:
+  - name: mart_spending_by_year
+    description: Obligations by fiscal year and award type.
+    data_tests:
+      - unique_combination:
+          arguments:
+            columns: [fiscal_year, award_group]
+  - name: mart_reconciliation
+    description: Our yearly totals beside USAspending's, with the difference.
+  - name: mart_agencies
+    description: Federal departments by obligations in the last complete fiscal years.
+    columns:
+      - name: agency
+        data_tests: [unique, not_null]
+  - name: mart_contractors
+    description: Prime contractors with work performed in the USVI.
+    columns:
+      - name: contractor_id
+        data_tests: [unique, not_null]
+  - name: mart_contract_leads
+    description: Contracts ending within the next 24 months - recompete leads.
+    columns:
+      - name: award_key
+        data_tests: [unique, not_null]
+      - name: ends_in
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [Within 6 months, 6 to 12 months, 12 to 24 months]
+  - name: mart_naics_demand
+    columns:
+      - name: naics_code
+        data_tests: [unique]
+  - name: mart_local_share
+    columns:
+      - name: fiscal_year
+        data_tests: [unique]
+  - name: mart_recipient_kinds
+  - name: mart_subcontracting
+    columns:
+      - name: prime
+        data_tests: [unique]
+  - name: mart_new_contracts
+  - name: mart_alerts
+    columns:
+      - name: alert_key
+        data_tests: [unique, not_null]

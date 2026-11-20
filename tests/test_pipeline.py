@@ -74,3 +74,11 @@ if __name__ == "__main__":
         if name.startswith("test_"):
             fn()
             print(f"  ok  {name}")
+
+
+def test_new_assistance_codes_are_collected():
+    """USAspending's F001-F010 codes (from October 2026) must be in the download filter."""
+    from common import ALL_PRIME_TYPES, GROUPS
+    assert {"F001", "F002"} <= set(GROUPS["grants"])
+    assert {"F006", "F007"} <= set(GROUPS["direct_payments"])
+    assert {f"F{n:03d}" for n in range(1, 11)} <= set(ALL_PRIME_TYPES)

@@ -1,0 +1,46 @@
+version: 2
+
+models:
+  - name: stg_transactions
+    description: Every prime award transaction performed in the USVI, typed and labelled.
+    columns:
+      - name: transaction_key
+        description: USAspending's unique key for the transaction
+        data_tests: [unique, not_null]
+      - name: award_key
+        data_tests: [not_null]
+      - name: award_group
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [contracts, grants, direct_payments, loans, other]
+      - name: action_date
+        data_tests: [not_null]
+      - name: recipient_kind
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [Individuals, Businesses, Territorial government, Nonprofits and colleges, Other and not stated]
+
+  - name: stg_subawards
+    columns:
+      - name: subaward_key
+        data_tests: [unique, not_null]
+      - name: prime_award_key
+        data_tests: [not_null]
+      - name: kind
+        data_tests:
+          - accepted_values:
+              arguments:
+                values: [subcontract, subgrant]
+
+  - name: stg_official_totals
+    data_tests:
+      - unique_combination:
+          arguments:
+            columns: [fiscal_year, award_group]
+
+  - name: stg_source_health
+    columns:
+      - name: source
+        data_tests: [unique]

@@ -1,0 +1,15 @@
+version: 2
+
+sources:
+  - name: raw
+    schema: raw
+    description: Loaded unchanged from the Parquet lake by pipeline/step4_load.py
+    tables:
+      - name: transactions
+        description: Every prime award transaction performed in the USVI, from USAspending bulk downloads (step 1)
+      - name: subawards
+        description: Subcontracts and subgrants performed in the USVI (step 2)
+      - name: official_totals
+        description: USAspending's own obligations by fiscal year and award type (step 3)
+      - name: source_health
+        description: When each collector last worked and how many runs in a row failed

@@ -29,12 +29,15 @@ USVI = [{"country": "USA", "state": "VI"}]
 
 # USAspending's award type codes, grouped the way its website groups them
 GROUPS = {
-    "contracts": ["A", "B", "C", "D"],              # definitive contracts, purchase and delivery orders, BPA calls
-    "grants": ["02", "03", "04", "05"],             # block, formula, project grants, cooperative agreements
-    "direct_payments": ["06", "10"],                # direct payments for a specified use, or unrestricted
-    "loans": ["07", "08"],                          # direct and guaranteed loans
-    "other": ["09", "11", "-1"],                    # insurance and other financial assistance
+    "contracts": ["A", "B", "C", "D"],                         # BPA calls, purchase and delivery orders, definitive contracts
+    "grants": ["02", "03", "04", "05", "F001", "F002"],        # grants and cooperative agreements
+    "direct_payments": ["06", "10", "F006", "F007"],           # direct payments for a specified use, or unrestricted
+    "loans": ["07", "08", "F003", "F004"],                     # direct loans and loan guarantees
+    "other": ["09", "11", "-1", "F005", "F008", "F009", "F010"],  # insurance, asset forfeiture, property, other
 }
+# Treasury replaced the two-digit assistance codes (02-11) with F001-F010 for awards
+# reported from 1 October 2026 (GSDM v1.3). Both sets stay in the list: older years keep
+# the old codes, new reports use the new ones. Leaving a code out silently drops money.
 FIRST_FY = 2008   # the search API starts on 1 October 2007 (fiscal year 2008)
 PAGE = 100        # the most rows the API returns per page
 MAX_WINDOW = 9_500  # the search index cannot page past 10,000 rows, so bigger windows are split

@@ -1,0 +1,10 @@
+version: 2
+
+models:
+  - name: int_awards
+    description: One row per award with its first and latest state and its USVI obligations.
+    columns:
+      - name: award_key
+        data_tests: [unique, not_null]
+      - name: first_action_date
+        data_tests: [not_null]
