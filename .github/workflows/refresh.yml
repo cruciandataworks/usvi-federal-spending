@@ -1,0 +1,127 @@
+# Runs the whole pipeline once a day. USAspending loads new records overnight, so a
+# morning run picks up everything agencies reported the day before.
+#
+# Where the data lives between runs (none of it is in git): the whole Parquet lake is
+# one file on a GitHub release called "lake". It is downloaded at the start and uploaded
+# again at the end. If it is ever deleted, the next run downloads every fiscal year again
+# from USAspending (about 15 minutes) - nothing is lost.
+#
+# Cost: about 4 minutes a day, longer once a week (the weekly full refresh). Free and
+# unlimited in a public repository.
+name: Federal spending refresh
+
+on:
+  schedule:
+    - cron: "23 11 * * *"   # 11:23 UTC = 7:23 AM in the Virgin Islands
+  workflow_dispatch:
+    inputs:
+      collect_only:
+        description: "Only download (steps 1-3) and save the lake"
+        type: boolean
+        default: false
+      test_failure:
+        description: "Fail on purpose to test the failure alert"
+        type: boolean
+        default: false
+
+permissions:
+  contents: write   # upload the lake to the release, daily data commit
+  issues: write     # alert issues
+
+concurrency:
+  group: refresh
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    env:
+      FTP_SERVER: ${{ secrets.FTP_SERVER }}   # empty until the secret exists
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v5
+
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+          cache: pip
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Download the lake from the "lake" release
+        run: |
+          if gh release download lake --pattern lake.tar.gz --dir /tmp 2>/dev/null; then
+            tar -xzf /tmp/lake.tar.gz
+            echo "Restored lake: $(du -sh lake | cut -f1)"
+          else
+            echo "::warning::No lake release found - downloading every fiscal year from USAspending."
+          fi
+
+      - name: Unit tests (parsers, no network)
+        run: python tests/test_pipeline.py
+
+      - name: Run pipeline (transactions, subawards, totals, load, dbt build, export, alerts)
+        env:
+          TEST_FAILURE: ${{ inputs.test_failure }}
+          ALERT_ASSIGNEE: ${{ vars.ALERT_ASSIGNEE }}
+        run: |
+          if [ "${{ inputs.collect_only }}" = "true" ]; then
+            python run_pipeline.py --to 3
+          else
+            python run_pipeline.py
+          fi
+
+      # Saved even when a later step failed: whatever was downloaded is valid raw data,
+      # and a long first backfill must never have to start again from nothing.
+      - name: Upload the lake back to the release
+        if: ${{ !cancelled() && hashFiles('lake/_state/*.json') != '' }}
+        run: |
+          tar -czf /tmp/lake.tar.gz lake
+          gh release view lake >/dev/null 2>&1 || \
+            gh release create lake --title "Data lake (auto-updated)" \
+              --notes "Every USAspending prime transaction and subaward performed in the USVI (Parquet). Replaced every run."
+          gh release upload lake /tmp/lake.tar.gz --clobber
+
+      # GitHub pauses scheduled workflows in repositories with no commits for 60 days.
+      # Committing the day's dashboard data prevents that.
+      - name: Daily data commit
+        if: ${{ inputs.collect_only != true }}
+        run: |
+          git config user.name "cdw-bot"
+          git config user.email "hello@cruciandataworks.com"
+          git add dashboard/data
+          git diff --cached --quiet || git commit -m "Daily federal spending snapshot"
+          git push
+
+      # Publish the refreshed dashboard to cruciandataworks.com (Hostinger) over FTP.
+      # Skipped until the FTP secrets are added in Settings > Secrets and variables > Actions.
+      - name: Upload dashboard to Hostinger
+        if: ${{ env.FTP_SERVER != '' && inputs.collect_only != true }}
+        uses: SamKirkland/FTP-Deploy-Action@v4.3.5
+        with:
+          server: ${{ secrets.FTP_SERVER }}
+          username: ${{ secrets.FTP_USERNAME }}
+          password: ${{ secrets.FTP_PASSWORD }}
+          local-dir: ./dashboard/
+          server-dir: ${{ vars.FTP_SERVER_DIR || '/public_html/projects/federal-spending/' }}
+
+      - name: Alert on failure
+        if: ${{ failure() }}
+        env:
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          ASSIGNEE: ${{ vars.ALERT_ASSIGNEE || 'OrlandoSpears' }}
+        run: |
+          gh label create refresh-failure --color C8553D --description "Scheduled refresh failed" 2>/dev/null || true
+          body="The federal spending refresh failed on $(date -u '+%Y-%m-%d %H:%M UTC').
+
+          Run log: $RUN_URL
+
+          The website still shows the last good data. Close this issue once the cause is fixed."
+          open=$(gh issue list --label refresh-failure --state open --json number -q '.[0].number')
+          if [ -n "$open" ]; then
+            gh issue comment "$open" --body "$body"
+          else
+            gh issue create --title "Federal spending refresh failed" --label refresh-failure --assignee "$ASSIGNEE" --body "$body"
+          fi
